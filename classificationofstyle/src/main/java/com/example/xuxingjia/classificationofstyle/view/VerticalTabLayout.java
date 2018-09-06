@@ -1,24 +1,28 @@
 package com.example.xuxingjia.classificationofstyle.view;
 
 import android.animation.ObjectAnimator;
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Scroller;
 import android.widget.TextView;
-
 import com.example.xuxingjia.classificationofstyle.R;
 import com.example.xuxingjia.classificationofstyle.utils.PxUtil;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import static com.example.xuxingjia.classificationofstyle.utils.Constant.DURATION;
 
 
@@ -30,15 +34,18 @@ public class VerticalTabLayout extends ScrollView implements View.OnClickListene
     private Context context;
     private View view;
     private LinearLayout mChildTextParentView;
-    private int selctColor;
-    private int unselctColor;
+    private int selctColor = Color.RED;
+    private int unselctColor = Color.BLACK;
 
     private List<String> leftStrings = null;
     private LinearLayout mIndicatorView;
     private int childViewHeight;
-
     private int lastPosition;
     private Scroller mScroller;
+    private int textSize = 49;
+    private int indicatorWidth = 0;
+    private int indicatorHeight = 0;
+    private int indicatorColor = Color.GREEN;
 
 
     public VerticalTabLayout(Context context) {
@@ -52,10 +59,32 @@ public class VerticalTabLayout extends ScrollView implements View.OnClickListene
     public VerticalTabLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         this.context = context;
+        indicatorWidth = PxUtil.dip2px(context, 5);
+        indicatorHeight = PxUtil.dip2px(context, 24);
         mScroller = new Scroller(context);
-        selctColor = getResources().getColor(R.color.left_selct_color);
-        unselctColor = getResources().getColor(R.color.left_unselct_color);
         childViewHeight = PxUtil.dip2px(context, 67);
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable
+                .VerticalTabLayout);
+        if (typedArray != null) {
+            int indexCount = typedArray.getIndexCount();
+            for (int i = 0; i < indexCount; i++) {
+                int index = typedArray.getIndex(i);
+                if (index == R.styleable.VerticalTabLayout_select_text_color) {
+                    selctColor = typedArray.getColor(index, selctColor);
+                } else if (index == R.styleable.VerticalTabLayout_text_color) {
+                    unselctColor = typedArray.getColor(index, unselctColor);
+                } else if (index == R.styleable.VerticalTabLayout_tab_text_size) {
+                    textSize = typedArray.getDimensionPixelSize(index, textSize);
+                } else if (index == R.styleable.VerticalTabLayout_indicator_width) {
+                    indicatorWidth = typedArray.getDimensionPixelSize(index, indicatorWidth);
+                } else if (index == R.styleable.VerticalTabLayout_indicator_height) {
+                    indicatorHeight = typedArray.getDimensionPixelSize(index, indicatorHeight);
+                } else if (index == R.styleable.VerticalTabLayout_indicator_color) {
+                    indicatorColor = typedArray.getColor(index, indicatorColor);
+                }
+            }
+            typedArray.recycle();
+        }
     }
 
     /**
@@ -96,31 +125,54 @@ public class VerticalTabLayout extends ScrollView implements View.OnClickListene
      *
      * @param leftStrings 左侧文字资源
      */
+    @SuppressLint("RtlHardcoded")
     private void addLeftChildView(List<String> leftStrings) {
         mChildTextParentView.removeAllViews();
         for (int i = 0; i < leftStrings.size(); i++) {
             TextView textView = new TextView(context);
-
+            textView.setTextSize(PxUtil.px2sp(context, textSize));
             if (mChildTextParentView != null) {
                 mChildTextParentView.addView(textView, i);
             }
-
             textView.setTag(i);
             textView.setOnClickListener(this);
             //设置textView属性
             ViewGroup.LayoutParams layoutParams = textView.getLayoutParams();
-            layoutParams.height = childViewHeight;
+            layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
             layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
             textView.setLayoutParams(layoutParams);
-            textView.setGravity(Gravity.CENTER);
+            textView.setGravity(Gravity.LEFT);
             textView.setText(leftStrings.get(i));
-
+            textView.setPadding(15, 25, 8, 25);
+            textView.setSingleLine();
             //设置默认选中效果
             if (i == 0) {
                 textView.setTextColor(selctColor);
             } else {
                 textView.setTextColor(unselctColor);
             }
+        }
+
+        if (mChildTextParentView.getChildCount() > 0) {
+            final TextView childView = (TextView) mChildTextParentView.getChildAt(0);
+            ViewTreeObserver treeObserver = childView.getViewTreeObserver();
+            treeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                        childView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        int height = childView.getHeight();
+                        if (height > 0) {
+                            childViewHeight = height;
+                        }
+                        if (mIndicatorView != null) {
+                            ViewGroup.LayoutParams layoutParams = mIndicatorView.getLayoutParams();
+                            layoutParams.height = childViewHeight;
+                            mIndicatorView.setLayoutParams(layoutParams);
+                        }
+                    }
+                }
+            });
         }
     }
 
@@ -148,8 +200,18 @@ public class VerticalTabLayout extends ScrollView implements View.OnClickListene
         //获取子控件
         LinearLayout mLlChildParent = (LinearLayout) getChildAt(0);
         mIndicatorView = (LinearLayout) mLlChildParent.getChildAt(0);
+        if (mIndicatorView != null) {
+            View mIndicator = mIndicatorView.getChildAt(0);
+            Drawable drawable = new ColorDrawable(indicatorColor);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                mIndicator.setBackground(drawable);
+            }
+            ViewGroup.LayoutParams layoutParams = mIndicator.getLayoutParams();
+            layoutParams.width = indicatorWidth;
+            layoutParams.height = indicatorHeight;
+            mIndicator.setLayoutParams(layoutParams);
+        }
         mChildTextParentView = (LinearLayout) mLlChildParent.getChildAt(1);
-
     }
 
     @Override

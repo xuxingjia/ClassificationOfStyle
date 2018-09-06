@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,11 +9,17 @@
 
     <com.example.xuxingjia.classificationofstyle.view.VerticalTabLayout
         android:id="@+id/vtl_tablayout"
-        android:layout_width="67dp"
-        android:layout_height="match_parent"/>
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        app:indicator_color="#009944"
+        app:indicator_width="3dp"
+        app:indicator_height="24dp"
+        app:select_text_color="#f00"
+        app:tab_text_size="15sp"
+        app:text_color="#333" />
 
     <com.example.xuxingjia.classificationofstyle.view.CustomDampView
         android:id="@+id/cdv_damp_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 </LinearLayout>
