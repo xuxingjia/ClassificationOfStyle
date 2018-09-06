@@ -15,7 +15,7 @@ Step 1. Add the JitPack repository to your build file
 Step 2. Add the dependency
 
     dependencies {
-            implementation 'com.github.xuxingjia:ClassificationOfStyleLibrary:v1.1'
+            implementation 'com.github.xuxingjia:ClassificationOfStyle:v1.0.0'
     }
 
 # How to Use
